@@ -1,11 +1,14 @@
-[![Build Status](https://secure.travis-ci.org/tonistiigi/dnsdock.png)](http://travis-ci.org/tonistiigi/dnsdock)
-
-
 ## dnsdock
 
-DNS server for automatic docker container discovery. Simplified version of [crosbymichael/skydock](https://github.com/crosbymichael/skydock).
+DNS server for automatic docker container discovery. Simplified version of https://github.com/tonistiigi/dnsdock which is in turn simplified version of crosbymichael/skydock.
 
-#### Differences from skydock
+#### Differences from tonistiigi/dnsdock
+
+- if you specify DNSDOCK_ALIAS=alias.some.fi environment variable to a container, dnsdock will be responding on A-queries for the alias with IP of the container
+
+- no HTTP server at the moment
+
+#### Differences of tonistiigi/dnsdock from skydock
 
 - *No raft / simple in-memory storage* - Does not use any distributed storage and is meant to be used only inside single host. This means no ever-growing log files and memory leakage. AFAIK skydock currently does not have a state machine so the raft log always keeps growing and you have to recreate the server periodically if you wish to run it for a long period of time. Also the startup is very slow because it has to read in all the previous log files.
 
@@ -81,7 +84,6 @@ Additional configuration options to dnsdock command:
 -domain="docker": Domain that is appended to all requests
 -environment="": Optional context before domain suffix
 -help=false: Show this message
--http=":80": Listen HTTP requests on this address
 -nameserver="8.8.8.8:53": DNS server for unmatched requests
 -ttl=0: TTL for matched requests
 -verbose=true: Verbose output
@@ -90,41 +92,16 @@ Additional configuration options to dnsdock command:
 If you also want to let the host machine discover the containers add `nameserver 172.17.42.1` to your `/etc/resolv.conf`.
 
 
-#### HTTP Server
-
-For easy overview and manual control dnsdock also includes HTTP server that lets you configure the server using a JSON API.
-
-```
-# show all active services
-curl http://dnsdock.docker/services
-
-# show a service
-curl http://dnsdock.docker/services/serviceid
-
-# add new service manually
-curl http://dnsdock.docker/services/newid -X PUT --data-ascii '{"name": "foo", "image": "bar", "ip": "192.168.0.3", "ttl": 30}'
-
-# remove a service
-curl http://dnsdock.docker/services/serviceid -X DELETE
-
-# change a property of an existing service
-curl http://dnsdock.docker/services/serviceid -X PATCH --data-ascii '{"ttl": 0}'
-
-# set new default TTL value
-curl http://dnsdock.docker/set/ttl -X PUT --data-ascii '10'
-```
-
-
 #### Overrides from ENV metadata
 
 If you wish to fine tune the DNS response addresses you can define specific environment variables during container startup. This overrides the default matching scheme from container and image name.
 
-Supported ENV variables are `DNSDOCK_NAME`, `DNSDOCK_IMAGE`, `DNSDOCK_TTL`.
+Supported ENV variables are `DNSDOCK_NAME`, `DNSDOCK_IMAGE`, `DNSDOCK_TTL`, `DNSDOCK_ALIAS`.
 
 ```
 docker run -e DNSDOCK_NAME=master -e DNSDOCK_IMAGE=mysql -e DNSDOCK_TTL=10 \
-           --name mymysql mysqlimage
-# matches master.mysql.docker
+           -e DNSDOCK_ALIAS=www.seznam.cz --name mymysql mysqlimage
+# matches master.mysql.docker and www.seznam.cz
 ```
 
 Service metadata syntax by [progrium/registrator](https://github.com/progrium/registrator) is also supported.
