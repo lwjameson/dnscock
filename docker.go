@@ -2,12 +2,13 @@ package main
 
 import (
 	"errors"
-	"github.com/samalba/dockerclient"
 	"log"
 	"net"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/samalba/dockerclient"
 )
 
 type DockerManager struct {
@@ -26,7 +27,7 @@ func NewDockerManager(c *Config, list ServiceListProvider) (*DockerManager, erro
 }
 
 func (d *DockerManager) Start() error {
-	d.docker.StartMonitorEvents(d.eventCallback)
+	d.docker.StartMonitorEvents(d.eventCallback, nil)
 
 	containers, err := d.docker.ListContainers(false, false, "")
 	if err != nil {
@@ -73,7 +74,7 @@ func (d *DockerManager) getService(id string) (*Service, error) {
 	return service, nil
 }
 
-func (d *DockerManager) eventCallback(event *dockerclient.Event, args ...interface{}) {
+func (d *DockerManager) eventCallback(event *dockerclient.Event, ec chan error, args ...interface{}) {
 	//log.Printf("Received event: %#v %#v\n", *event, args)
 
 	switch event.Status {
@@ -154,6 +155,10 @@ func overrideFromEnv(in *Service, env map[string]string) (out *Service) {
 
 		if k == "SERVICE_REGION" {
 			region = v
+		}
+
+		if k == "DNSDOCK_ALIAS" {
+			in.Alias = v
 		}
 	}
 

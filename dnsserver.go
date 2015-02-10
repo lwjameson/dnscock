@@ -2,13 +2,14 @@ package main
 
 import (
 	"errors"
-	"github.com/miekg/dns"
 	"log"
 	"net"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 type Service struct {
@@ -16,10 +17,11 @@ type Service struct {
 	Image string
 	Ip    net.IP
 	Ttl   int
+	Alias string
 }
 
 func NewService() (s *Service) {
-	s = &Service{Ttl: -1}
+	s = &Service{Ttl: -1, Alias: ""}
 	return
 }
 
@@ -34,6 +36,7 @@ type DNSServer struct {
 	config   *Config
 	server   *dns.Server
 	services map[string]*Service
+	aliases  map[string]map[string]struct{}
 	lock     *sync.RWMutex
 }
 
@@ -41,16 +44,23 @@ func NewDNSServer(c *Config) *DNSServer {
 	s := &DNSServer{
 		config:   c,
 		services: make(map[string]*Service),
+		aliases:  make(map[string]map[string]struct{}),
 		lock:     &sync.RWMutex{},
 	}
 
 	mux := dns.NewServeMux()
-	mux.HandleFunc(c.domain[len(c.domain)-1]+".", s.handleRequest)
-	mux.HandleFunc(".", s.forwardRequest)
+	//mux.HandleFunc(c.domain[len(c.domain)-1]+".", s.handleRequest)
+	//mux.HandleFunc(".", s.forwardRequest)
+	mux.HandleFunc(".", s.handleRequest)
 
 	s.server = &dns.Server{Addr: c.dnsAddr, Net: "udp", Handler: mux}
 
 	return s
+}
+
+func (s *DNSServer) IsLocal(name string) bool {
+	// Is it really this easy? I haven't read the RFCs.
+	return strings.HasSuffix(name, s.config.domain.String())
 }
 
 func (s *DNSServer) Start() error {
@@ -61,6 +71,28 @@ func (s *DNSServer) Stop() {
 	s.server.Shutdown()
 }
 
+func (s *DNSServer) AddAlias(alias string, id string) {
+	// the dns.IsDomainName check is really weak. If validity of alias
+	// is a concern, it should be rewritten to sth like the unexported
+	// isDomainName in https://golang.org/src/net/dnsclient.go
+	_, ok := dns.IsDomainName(alias)
+	if ok {
+		// assign service id to alias. If there's no map for the alias key,
+		// create it
+		id_map, ok := s.aliases[alias]
+		if !ok {
+			id_map = make(map[string]struct{})
+			s.aliases[alias] = id_map
+			log.Println("Created new entry for alias, id:", alias, id)
+		} else {
+			log.Println("Add another entry for alias, id:", alias, id)
+		}
+		id_map[id] = struct{}{}
+	} else {
+		log.Println(alias, "passed as an Alias is not a valid domain name. Not using it.")
+	}
+}
+
 func (s *DNSServer) AddService(id string, service Service) {
 	defer s.lock.Unlock()
 	s.lock.Lock()
@@ -68,9 +100,30 @@ func (s *DNSServer) AddService(id string, service Service) {
 	id = s.getExpandedId(id)
 	s.services[id] = &service
 
+	if service.Alias != "" {
+		s.AddAlias(service.Alias, id)
+	}
+
 	if s.config.verbose {
 		log.Println("Added service:", id, service)
 	}
+}
+
+func (s *DNSServer) RemoveAliasesForId(id string) error {
+	for alias, id_map := range s.aliases {
+		// go through all existing aliases and check if they point to removed
+		// id. If yes, remove the linking.
+		if _, alias_pointed := id_map[id]; alias_pointed {
+			delete(id_map, id)
+			log.Println("Deleted id from alias", id, alias)
+		}
+		// if this was the last id for the alias, remove the alias completely
+		if len(id_map) == 0 {
+			delete(s.aliases, alias)
+			log.Println("Removed empty alias", alias)
+		}
+	}
+	return nil
 }
 
 func (s *DNSServer) RemoveService(id string) error {
@@ -81,6 +134,8 @@ func (s *DNSServer) RemoveService(id string) error {
 	if _, ok := s.services[id]; !ok {
 		return errors.New("No such service: " + id)
 	}
+
+	s.RemoveAliasesForId(id)
 
 	delete(s.services, id)
 
@@ -126,13 +181,76 @@ func (s *DNSServer) forwardRequest(w dns.ResponseWriter, r *dns.Msg) {
 	}
 }
 
+func getServiceRecord(s *Service, name string, default_ttl int) *dns.A {
+	rr := new(dns.A)
+	var ttl int
+	if s.Ttl != -1 {
+		ttl = s.Ttl
+	} else {
+		ttl = default_ttl
+	}
+	rr.Hdr = dns.RR_Header{
+		Name:   name,
+		Rrtype: dns.TypeA,
+		Class:  dns.ClassINET,
+		Ttl:    uint32(ttl),
+	}
+	rr.A = s.Ip
+	return rr
+}
+
+func (s *DNSServer) getServicesForAlias(alias string) (pointed []*Service) {
+
+	defer s.lock.RUnlock()
+	s.lock.RLock()
+
+	for service_id := range s.aliases[alias] {
+		pointed = append(pointed, s.services[service_id])
+	}
+	return pointed
+}
+
 func (s *DNSServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 	m := new(dns.Msg)
 	m.SetReply(r)
 
-	// Only care about A requests
-	// Send empty response otherwise
+	query := r.Question[0].Name
+
+	if query[len(query)-1] == '.' {
+		query = query[:len(query)-1]
+	}
+
+	alias_id_map, alias_exists := s.aliases[query]
+	if alias_exists {
+		if r.Question[0].Qtype == dns.TypeA {
+			// A query for registered alias => get all services under the
+			// alias and reply
+			m.Answer = make([]dns.RR, 0, len(alias_id_map))
+			relevant_services := s.getServicesForAlias(query)
+
+			for i := range relevant_services {
+				m.Answer = append(m.Answer,
+					getServiceRecord(
+						relevant_services[i], r.Question[0].Name, s.config.ttl))
+			}
+			w.WriteMsg(m)
+			return
+		} else {
+			// non-A query for registered alias => forward
+			s.forwardRequest(w, r)
+			return
+		}
+	}
+
+	if !s.IsLocal(query) {
+		// a non-alias non-local query => forward
+		s.forwardRequest(w, r)
+		return
+	}
+	// Further we consider it's a query to local domain (s.config.domain)
+
 	if r.Question[0].Qtype != dns.TypeA {
+		// Local non-A request => respond with only SOA (empty response)
 		m.Answer = s.createSOA()
 		w.WriteMsg(m)
 		return
@@ -140,29 +258,9 @@ func (s *DNSServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 
 	m.Answer = make([]dns.RR, 0, 2)
 
-	query := r.Question[0].Name
-	if query[len(query)-1] == '.' {
-		query = query[:len(query)-1]
-	}
-
 	for service := range s.queryServices(query) {
-		rr := new(dns.A)
-
-		var ttl int
-		if service.Ttl != -1 {
-			ttl = service.Ttl
-		} else {
-			ttl = s.config.ttl
-		}
-
-		rr.Hdr = dns.RR_Header{
-			Name:   r.Question[0].Name,
-			Rrtype: dns.TypeA,
-			Class:  dns.ClassINET,
-			Ttl:    uint32(ttl),
-		}
-		rr.A = service.Ip
-		m.Answer = append(m.Answer, rr)
+		m.Answer = append(m.Answer,
+			getServiceRecord(service, r.Question[0].Name, s.config.ttl))
 	}
 	if len(m.Answer) == 0 {
 		m.Answer = s.createSOA()
