@@ -28,7 +28,6 @@ type Config struct {
 	domain     Domain
 	dockerHost string
 	verbose    bool
-	httpAddr   string
 	ttl        int
 }
 
@@ -43,7 +42,6 @@ func NewConfig() *Config {
 		dnsAddr:    ":53",
 		domain:     NewDomain("docker"),
 		dockerHost: dockerHost,
-		httpAddr:   ":80",
 	}
 
 }
