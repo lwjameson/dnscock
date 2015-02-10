@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/miekg/dns"
 	"net"
 	"testing"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 func TestDNSResponse(t *testing.T) {
@@ -37,17 +38,20 @@ func TestDNSResponse(t *testing.T) {
 	}
 
 	server.AddService("foo", Service{Name: "foo", Image: "bar", Ip: net.ParseIP("127.0.0.1")})
-	server.AddService("baz", Service{Name: "baz", Image: "bar", Ip: net.ParseIP("127.0.0.1"), Ttl: -1})
+	server.AddService("baz", Service{Name: "baz", Image: "bar", Ip: net.ParseIP("127.0.0.1"), Ttl: -1, Alias: "www.seznam.cz"})
+
+	server.AddService("erw", Service{Name: "erw", Image: "bar", Ip: net.ParseIP("127.0.0.1"), Ttl: -1, Alias: "www.seznam.cz"})
 
 	var inputs = []struct {
 		query    string
 		expected int
 	}{
-		{"docker.", 2},
-		{"*.docker.", 2},
-		{"bar.docker.", 2},
+		{"docker.", 3},
+		{"*.docker.", 3},
+		{"bar.docker.", 3},
 		{"foo.docker.", 0},
 		{"baz.bar.docker.", 1},
+		{"www.seznam.cz.", 2},
 	}
 
 	for _, input := range inputs {
@@ -163,6 +167,24 @@ func TestServiceManagement(t *testing.T) {
 		t.Error("Item count after remove should be 1")
 	}
 
+}
+
+func TestAliasManagement(t *testing.T) {
+	servId := "fsdfsdfsd"
+	alias := "www.seznam.cz"
+	s := NewDNSServer(NewConfig())
+	s.AddService(servId, Service{Name: "mysql", Alias: alias})
+	id_map, exists := s.aliases[alias]
+	if len(id_map) != 1 {
+		t.Error("should be only one alias")
+	}
+	_, id_is_there := id_map[servId]
+	if !id_is_there {
+		t.Error("alias registered under wrong id")
+	}
+	if !exists {
+		t.Error("alias was not created")
+	}
 }
 
 func TestDNSRequestMatch(t *testing.T) {
