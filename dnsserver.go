@@ -262,7 +262,7 @@ func (s *DNSServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 	m.SetReply(r)
 
 	if s.config.debug {
-		log.Println("incoming query", r.Question[0].Name)
+		log.Println("incoming query", r)
 	}
 
 	query := r.Question[0].Name
@@ -289,9 +289,10 @@ func (s *DNSServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 			return
 		} else {
 			if s.config.debug {
-				log.Println("non-A query for existing alias, forwarding")
+				log.Println("non-A query for existing alias, return SOA")
 			}
-			s.forwardRequest(w, r)
+			m.Answer = s.createSOA()
+			w.WriteMsg(m)
 			return
 		}
 	}
