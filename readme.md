@@ -10,7 +10,7 @@ This project is based on https://github.com/tonistiigi/dnsdock which is in turn 
 
 - no HTTP server at the moment
 
-- Not a difference per se, just something to pay attention: The environment variables are still called DNSDOCK_something (not DNSCOCK_something), so that you can try both projects and the invocation remains 
+- Not a difference per se, just something to pay attention: The environment variables are still called DNSDOCK_something (not DNSCOCK_something), so that you can try both projects and the invocation remains almost the same.
 
 #### Differences of dnsdock|dnscock from skydock
 
