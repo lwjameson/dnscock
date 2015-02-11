@@ -261,6 +261,10 @@ func (s *DNSServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 	m := new(dns.Msg)
 	m.SetReply(r)
 
+	if s.config.debug {
+		log.Println("incoming query", r.Question[0].Name)
+	}
+
 	query := r.Question[0].Name
 
 	if query[len(query)-1] == '.' {
@@ -270,8 +274,9 @@ func (s *DNSServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 	alias_id_map, alias_exists := s.aliases[query]
 	if alias_exists {
 		if r.Question[0].Qtype == dns.TypeA {
-			// A query for registered alias => get all services under the
-			// alias and reply
+			if s.config.debug {
+				log.Println("A query for existing alias, getting all the pointed services for A records in reply")
+			}
 			m.Answer = make([]dns.RR, 0, len(alias_id_map))
 			relevant_services := s.getServicesForAlias(query)
 
@@ -283,21 +288,29 @@ func (s *DNSServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 			w.WriteMsg(m)
 			return
 		} else {
-			// non-A query for registered alias => forward
+			if s.config.debug {
+				log.Println("non-A query for existing alias, forwarding")
+			}
 			s.forwardRequest(w, r)
 			return
 		}
 	}
 
 	if !s.IsLocal(query) {
-		// a non-alias non-local query => forward
+		if s.config.debug {
+			log.Println("query is not local, forwarding")
+		}
 		s.forwardRequest(w, r)
 		return
 	}
-	// Further we consider it's a query to local domain (s.config.domain)
+	if s.config.debug {
+		log.Println("This query is for local domain", s.config.domain)
+	}
 
 	if r.Question[0].Qtype != dns.TypeA {
-		// Local non-A request => respond with only SOA (empty response)
+		if s.config.debug {
+			log.Println("Non-A query. We service only A in local domain, reply with SOA")
+		}
 		m.Answer = s.createSOA()
 		w.WriteMsg(m)
 		return

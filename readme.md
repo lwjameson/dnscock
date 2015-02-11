@@ -12,6 +12,8 @@ This project is based on https://github.com/tonistiigi/dnsdock which is in turn 
 
 - Not a difference per se, just something to pay attention: The environment variables are still called DNSDOCK_something (not DNSCOCK_something), so that you can try both projects and the invocation remains almost the same.
 
+- Docker image is from scratch and it install a static build
+
 #### Differences of dnsdock|dnscock from skydock
 
 - *No raft / simple in-memory storage* - Does not use any distributed storage and is meant to be used only inside single host. This means no ever-growing log files and memory leakage. AFAIK skydock currently does not have a state machine so the raft log always keeps growing and you have to recreate the server periodically if you wish to run it for a long period of time. Also the startup is very slow because it has to read in all the previous log files.

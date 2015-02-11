@@ -20,6 +20,7 @@ func main() {
 	environment := flag.String("environment", "", "Optional context before domain suffix")
 	flag.StringVar(&config.dockerHost, "docker", config.dockerHost, "Path to the docker socket")
 	flag.BoolVar(&config.verbose, "verbose", true, "Verbose output")
+	flag.BoolVar(&config.debug, "debug", false, "See coming queries")
 	flag.IntVar(&config.ttl, "ttl", config.ttl, "TTL for matched requests")
 
 	var showVersion bool

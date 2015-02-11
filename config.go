@@ -28,6 +28,7 @@ type Config struct {
 	domain     Domain
 	dockerHost string
 	verbose    bool
+	debug      bool
 	ttl        int
 }
 
