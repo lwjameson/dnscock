@@ -1,14 +1,18 @@
-## dnsdock
+## dnscock
+DNS server for automatic Docker container discovery.
 
-DNS server for automatic docker container discovery. Simplified version of https://github.com/tonistiigi/dnsdock which is in turn simplified version of crosbymichael/skydock.
+This project is based on https://github.com/tonistiigi/dnsdock which is in turn simplified version of crosbymichael/skydock.
+
 
 #### Differences from tonistiigi/dnsdock
 
-- if you specify DNSDOCK_ALIAS=alias.some.fi environment variable to a container, dnsdock will be responding on A-queries for the alias with IP of the container
+- if you specify DNSDOCK_ALIAS=alias.some.fi environment variable to a container, dnscock will be responding on A-queries for the alias with IP of the container
 
 - no HTTP server at the moment
 
-#### Differences of tonistiigi/dnsdock from skydock
+- Not a difference per se, just something to pay attention: The environment variables are still called DNSDOCK_something (not DNSCOCK_something), so that you can try both projects and the invocation remains 
+
+#### Differences of tonistiigi/dnsdock (and dnscock) from skydock
 
 - *No raft / simple in-memory storage* - Does not use any distributed storage and is meant to be used only inside single host. This means no ever-growing log files and memory leakage. AFAIK skydock currently does not have a state machine so the raft log always keeps growing and you have to recreate the server periodically if you wish to run it for a long period of time. Also the startup is very slow because it has to read in all the previous log files.
 
@@ -24,7 +28,7 @@ DNS server for automatic docker container discovery. Simplified version of https
 
 #### Usage
 
-Dnsdock connects to Docker Remote API and keeps an up to date list of running containers. If a DNS request matches some of the containers their local IP addresses are returned.
+Dnscock connects to Docker Remote API and keeps an up to date list of running containers. If a DNS request matches some of the containers their local IP addresses are returned.
 
 Format for a request matching a container is:
 `<anything>.<container-name>.<image-name>.<environment>.<domain>`.
@@ -66,17 +70,17 @@ redis1.*.docker.		0	IN	A	172.17.42.2
 
 DNS listening port needs to be binded to the *docker0* inferface so that its available to all containers. To avoid this IP changing during host restart add it the docker default options. Open file `/etc/default/docker` and add `-bip=172.17.42.1/24 -dns 172.17.42.1` to `DOCKER_OPTS` variable. Restart docker daemon after you have done that (`sudo service docker restart`).
 
-Now you only need to run the dnsdock container:
+Now you only need to run the dnscock container:
 
 ```
-docker run -d -v /var/run/docker.sock:/var/run/docker.sock --name dnsdock -p 172.17.42.1:53:53/udp tonistiigi/dnsdock [--opts]
+docker run -d -v /var/run/docker.sock:/var/run/docker.sock --name dnscock -p 172.17.42.1:53:53/udp tonistiigi/dnscock [--opts]
 ```
 
 - `-d` starts container as daemon
-- `-v /var/run/docker.sock:/var/run/docker.sock` shares the docker socket to the container so that dnsdock can connect to the Docker API.
+- `-v /var/run/docker.sock:/var/run/docker.sock` shares the docker socket to the container so that dnscock can connect to the Docker API.
 - `-p 172.17.42.1:53:53/udp` exposes the default DNS port to the docker0 bridge interface.
 
-Additional configuration options to dnsdock command:
+Additional configuration options to dnscock command:
 
 ```
 -dns=":53": Listen DNS requests on this address
@@ -112,7 +116,7 @@ docker run -e SERVICE_TAGS=master -e SERVICE_NAME=mysql -e SERVICE_REGION=us2 \
 # matches master.mysql.us2.docker
 ```
 
-If you want dnsdock to skip processing a specific container set its `DNSDOCK_IGNORE` or `SERVICE_IGNORE` environment variable.
+If you want dnscock to skip processing a specific container set its `DNSDOCK_IGNORE` or `SERVICE_IGNORE` environment variable.
 
 
 #### OSX Usage
@@ -135,7 +139,7 @@ Then route traffic that matches you containers to your virtual machine internal 
 sudo route -n add -net 172.17.0.0 <VAGRANT_MACHINE_IP>
 ```
 
-Finally, to make OSX use dnsdock for requests that match your domain suffix create a file with your domain ending under `/etc/resolver` (for example `/etc/resolver/myprojectname.docker`) and set its contents to `nameserver 172.17.42.1`.
+Finally, to make OSX use dnscock for requests that match your domain suffix create a file with your domain ending under `/etc/resolver` (for example `/etc/resolver/myprojectname.docker`) and set its contents to `nameserver 172.17.42.1`.
 
 ---
 

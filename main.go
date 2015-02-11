@@ -30,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	if showVersion {
-		fmt.Println("dnsdock", version)
+		fmt.Println("dnscock", version)
 		return
 	}
 
