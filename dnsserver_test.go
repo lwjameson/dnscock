@@ -207,6 +207,12 @@ func TestAliasManagement(t *testing.T) {
 	if len(s.aliases) != 0 {
 		t.Error("aliases map should be empty")
 	}
+	// invalid domain name
+	s.AddService(servId, Service{Name: "mysql", Alias: "not_a_domain.you.wish"})
+
+	if len(s.aliases) != 0 {
+		t.Error("invalid domain name alias should not be considered")
+	}
 
 }
 
