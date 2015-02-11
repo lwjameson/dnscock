@@ -6,7 +6,7 @@ This project is based on https://github.com/tonistiigi/dnsdock which is in turn 
 
 #### Differences of dnscock from tonistiigi/dnsdock
 
-- if you specify DNSDOCK_ALIAS=alias.some.fi environment variable to a container, dnscock will be responding on A-queries for the alias with IP of the container
+- if you specify DNSDOCK_ALIAS=alias.some.fi environment variable to a container, dnscock will be responding on A-queries for the alias with IP of the container. You can specify same alias for more containers. Then there will be A records in the response.
 
 - no HTTP server at the moment
 
