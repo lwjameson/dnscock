@@ -1,10 +1,10 @@
 ## dnscock
 DNS server for automatic Docker container discovery.
 
-This project is based on https://github.com/tonistiigi/dnsdock which is in turn simplified version of crosbymichael/skydock.
+This project is based on https://github.com/tonistiigi/dnsdock which is in turn simplified version of https://github.com/crosbymichael/skydock.
 
 
-#### Differences from tonistiigi/dnsdock
+#### Differences of dnscock from tonistiigi/dnsdock
 
 - if you specify DNSDOCK_ALIAS=alias.some.fi environment variable to a container, dnscock will be responding on A-queries for the alias with IP of the container
 
@@ -12,7 +12,7 @@ This project is based on https://github.com/tonistiigi/dnsdock which is in turn 
 
 - Not a difference per se, just something to pay attention: The environment variables are still called DNSDOCK_something (not DNSCOCK_something), so that you can try both projects and the invocation remains 
 
-#### Differences of tonistiigi/dnsdock (and dnscock) from skydock
+#### Differences of dnsdock|dnscock from skydock
 
 - *No raft / simple in-memory storage* - Does not use any distributed storage and is meant to be used only inside single host. This means no ever-growing log files and memory leakage. AFAIK skydock currently does not have a state machine so the raft log always keeps growing and you have to recreate the server periodically if you wish to run it for a long period of time. Also the startup is very slow because it has to read in all the previous log files.
 
