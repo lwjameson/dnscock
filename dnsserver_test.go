@@ -171,6 +171,7 @@ func TestServiceManagement(t *testing.T) {
 
 func TestAliasManagement(t *testing.T) {
 	servId := "fsdfsdfsd"
+	servId2 := "fdsfsdfsdsdfsdfsd"
 	alias := "www.seznam.cz"
 	s := NewDNSServer(NewConfig())
 	s.AddService(servId, Service{Name: "mysql", Alias: alias})
@@ -185,6 +186,28 @@ func TestAliasManagement(t *testing.T) {
 	if !exists {
 		t.Error("alias was not created")
 	}
+	s.AddService(servId2, Service{Name: "redis", Alias: alias})
+	id_map, exists = s.aliases[alias]
+	if len(id_map) != 2 {
+		t.Error("should be two aliases now")
+	}
+
+	s.RemoveService(servId)
+
+	id_map, exists = s.aliases[alias]
+	if len(id_map) != 1 {
+		t.Error("should be one alias again")
+	}
+	_, id_is_there = id_map[servId2]
+	if !id_is_there {
+		t.Error("alias registered under wrong id")
+	}
+
+	s.RemoveService(servId2)
+	if len(s.aliases) != 0 {
+		t.Error("aliases map should be empty")
+	}
+
 }
 
 func TestDNSRequestMatch(t *testing.T) {
