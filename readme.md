@@ -6,6 +6,8 @@ This project is based on https://github.com/tonistiigi/dnsdock which is in turn 
 
 #### Differences of dnscock from tonistiigi/dnsdock
 
+- you can register container under more than one alias by passing comma-separate list to the DNSDOCK_ALIAS environment variable, e.g DNSDOCK_ALIAS="local.web1.fi,local.web2.fi"
+
 - if you specify DNSDOCK_ALIAS=alias.some.fi environment variable to a container, dnscock will be responding on A-queries for the alias with IP of the container. You can specify same alias for more containers. Then there will be A records in the response.
 
 - no HTTP server at the moment

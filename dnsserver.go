@@ -148,7 +148,9 @@ func (s *DNSServer) AddService(id string, service Service) {
 	s.services[id] = &service
 
 	if service.Alias != "" {
-		s.AddAlias(service.Alias, id)
+		for _, alias := range strings.Split(service.Alias, ",") {
+			s.AddAlias(alias, id)
+		}
 	}
 
 	if s.config.verbose {
@@ -269,6 +271,11 @@ func (s *DNSServer) handleRequest(w dns.ResponseWriter, r *dns.Msg) {
 
 	if query[len(query)-1] == '.' {
 		query = query[:len(query)-1]
+	}
+
+	if query == "print-status" {
+		log.Println("services: ", s.services)
+		log.Println("aliases: ", s.aliases)
 	}
 
 	alias_id_map, alias_exists := s.aliases[query]

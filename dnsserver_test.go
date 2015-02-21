@@ -40,7 +40,7 @@ func TestDNSResponse(t *testing.T) {
 	server.AddService("foo", Service{Name: "foo", Image: "bar", Ip: net.ParseIP("127.0.0.1")})
 	server.AddService("baz", Service{Name: "baz", Image: "bar", Ip: net.ParseIP("127.0.0.1"), Ttl: -1, Alias: "www.seznam.cz"})
 
-	server.AddService("erw", Service{Name: "erw", Image: "bar", Ip: net.ParseIP("127.0.0.1"), Ttl: -1, Alias: "www.seznam.cz"})
+	server.AddService("erw", Service{Name: "erw", Image: "bar", Ip: net.ParseIP("127.0.0.1"), Ttl: -1, Alias: "www.seznam.cz,www.someelse.fi"})
 
 	var inputs = []struct {
 		query    string
@@ -52,6 +52,7 @@ func TestDNSResponse(t *testing.T) {
 		{"foo.docker.", 0},
 		{"baz.bar.docker.", 1},
 		{"www.seznam.cz.", 2},
+		{"www.someelse.fi.", 1},
 	}
 
 	for _, input := range inputs {
@@ -173,34 +174,40 @@ func TestAliasManagement(t *testing.T) {
 	servId := "fsdfsdfsd"
 	servId2 := "fdsfsdfsdsdfsdfsd"
 	alias := "www.seznam.cz"
+	alias2 := "www.chmi.cz"
 	s := NewDNSServer(NewConfig())
 	s.AddService(servId, Service{Name: "mysql", Alias: alias})
 	id_map, exists := s.aliases[alias]
 	if len(id_map) != 1 {
-		t.Error("should be only one alias")
+		t.Error("should be one service under", alias)
 	}
 	_, id_is_there := id_map[servId]
 	if !id_is_there {
-		t.Error("alias registered under wrong id")
+		t.Error("Service alias registered under wrong id")
 	}
 	if !exists {
-		t.Error("alias was not created")
+		t.Error("alias entry was not created")
 	}
-	s.AddService(servId2, Service{Name: "redis", Alias: alias})
+	s.AddService(servId2, Service{Name: "redis", Alias: alias + "," + alias2})
 	id_map, exists = s.aliases[alias]
 	if len(id_map) != 2 {
-		t.Error("should be two aliases now")
+		t.Error("should be two services now under alias", alias)
+	}
+
+	id_map, exists = s.aliases[alias2]
+	if len(id_map) != 1 {
+		t.Error("There should be one service under alias", alias2)
 	}
 
 	s.RemoveService(servId)
 
 	id_map, exists = s.aliases[alias]
 	if len(id_map) != 1 {
-		t.Error("should be one alias again")
+		t.Error("should be again one service under alias", alias)
 	}
 	_, id_is_there = id_map[servId2]
 	if !id_is_there {
-		t.Error("alias registered under wrong id")
+		t.Error("service alias registered under wrong id")
 	}
 
 	s.RemoveService(servId2)
