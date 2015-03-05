@@ -1,7 +1,5 @@
-FROM busybox
-
-ADD dnscock /dnscock
+FROM golang:onbuild
 
 EXPOSE 53/udp
 
-ENTRYPOINT ["/dnscock"] 
+ENTRYPOINT ["/go/src/app/dnscock"] 
