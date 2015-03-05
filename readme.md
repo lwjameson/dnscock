@@ -8,9 +8,7 @@
     - [Parameters](#parameters)
   - [DNS service discovery mechanism](#dns-service-discovery-mechanism)
   - [Differences of dnscock from tonistiigi/dnsdock](#differences-of-dnscock-from-tonistiigidnsdock)
-  - [Differences of dnsdock|dnscock from skydock](#differences-of-dnsdock|dnscock-from-skydock)
-    - [OSX Usage](#osx-usage)
-  - [](#)
+  - [More info](#more-info)
   - [Thanks](#thanks)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -106,43 +104,9 @@ redis1.*.docker.		0	IN	A	172.17.42.2
 
 - Docker image is from scratch and it install a static build
 
-## Differences of dnsdock|dnscock from skydock
+## More info
 
-- *No raft / simple in-memory storage* - Does not use any distributed storage and is meant to be used only inside single host. This means no ever-growing log files and memory leakage. AFAIK skydock currently does not have a state machine so the raft log always keeps growing and you have to recreate the server periodically if you wish to run it for a long period of time. Also the startup is very slow because it has to read in all the previous log files.
-
-- *No TTL heartbeat* - Skydock sends heartbeats for every container that reset the DNS TTL value. In production this has not turned out to be reliable. What makes this worse it that if a heartbeat has been missed, skydock does not recover until you restart it. Dnsdock uses static TTL that does not count down. You can override it for a container and also change it without restarting(before updates). In most cases you would want to use TTL=0 anyway.
-
-- *No dependency to other container* - Dnsdock does not use a separate DNS server but has one built in. Linking to another container makes recovery from crash much harder. For example skydock does not recover from skydns crash even if the crashed container is restarted.
-
-- A records only for now.
-
-- No support for Javascript plugins.
-
-- There's a slight difference in a way image names are extracted from a container. Skydock uses the last tag set on image while dnsdock uses the specific tag that was used when the container was created. This means that if a new version of an image comes out and untags the image that your container still uses, the DNS requests for this old container still work.
-
-### OSX Usage
-
-Original tutorial: http://www.asbjornenge.com/wwc/vagrant_skydocking.html
-
-If you use docker on OSX via Vagrant you can do this to make your containers discoverable from your main machine.
-
-In your Vagrantfile add the following to let your virtual machine accept packets for other IPs:
-
-```ruby
-config.vm.provider :virtualbox do |vb|
-  vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
-end
-```
-
-Then route traffic that matches you containers to your virtual machine internal IP:
-
-```
-sudo route -n add -net 172.17.0.0 <VAGRANT_MACHINE_IP>
-```
-
-Finally, to make OSX use dnscock for requests that match your domain suffix create a file with your domain ending under `/etc/resolver` (for example `/etc/resolver/myprojectname.docker`) and set its contents to `nameserver 172.17.42.1`.
-
----
+More info on can be found in readme of https://github.com/tonistiigi/dnsdock.
 
 ## Thanks
 Lots of code in this repo is directly influenced by skydns and skydock. Many thanks to the authors of these projects.
