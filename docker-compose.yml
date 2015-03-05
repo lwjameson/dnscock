@@ -1,5 +1,5 @@
 dns:
-  image: t0mk/newcock
+  image: t0mk/dnscock 
   volumes:
     - '/var/run/docker.sock:/var/run/docker.sock'
   ports:

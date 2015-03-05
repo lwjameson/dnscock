@@ -3,28 +3,35 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [dnscock](#dnscock)
+  - [Build](#build)
   - [Usage](#usage)
     - [Parameters](#parameters)
   - [DNS service discovery mechanism](#dns-service-discovery-mechanism)
   - [Differences of dnscock from tonistiigi/dnsdock](#differences-of-dnscock-from-tonistiigidnsdock)
   - [Differences of dnsdock|dnscock from skydock](#differences-of-dnsdock|dnscock-from-skydock)
-  - [OSX Usage](#osx-usage)
-- [](#)
+    - [OSX Usage](#osx-usage)
+  - [](#)
   - [Thanks](#thanks)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## dnscock
+# dnscock
 DNS server for automatic Docker container discovery.
 
 This project is based on https://github.com/tonistiigi/dnsdock which is in turn simplified version of https://github.com/crosbymichael/skydock.
 
-### Usage
+## Build
+
+```
+$ docker build -t t0mk/dnscock ./
+```
+
+## Usage
 Dnscock needs to access the docker socket to listen for events like new container creation and removal. Default value is unix socket (/var/run/docker.sock), so you should pass the socket as a volume file. You can also tell dnscock to listen on TCP socket via the "docker" parameter.
 
 The docker-compose.yml shows basic usage. Once you run it with `docker-compose up`, you can try to query for all the containers with dig: `dig @your_ip \*.docker`.
 
-#### Parameters
+### Parameters
 
 Implemeted parameters with defaults:
 
@@ -39,7 +46,7 @@ Implemeted parameters with defaults:
 -debug=false: Debug output
 ```
 
-### DNS service discovery mechanism
+## DNS service discovery mechanism
 
 Dnscock connects to Docker Remote API and keeps an up to date list of running containers. If a DNS request matches some of the containers their local IP addresses are returned.
 
@@ -87,7 +94,7 @@ redis1.redis.docker.		0	IN	A	172.17.42.2
 redis1.*.docker.		0	IN	A	172.17.42.2
 ```
 
-### Differences of dnscock from tonistiigi/dnsdock
+## Differences of dnscock from tonistiigi/dnsdock
 
 - you can register container under more than one alias by passing comma-separate list to the DNSDOCK_ALIAS environment variable, e.g DNSDOCK_ALIAS="local.web1.fi,local.web2.fi"
 
@@ -99,7 +106,7 @@ redis1.*.docker.		0	IN	A	172.17.42.2
 
 - Docker image is from scratch and it install a static build
 
-### Differences of dnsdock|dnscock from skydock
+## Differences of dnsdock|dnscock from skydock
 
 - *No raft / simple in-memory storage* - Does not use any distributed storage and is meant to be used only inside single host. This means no ever-growing log files and memory leakage. AFAIK skydock currently does not have a state machine so the raft log always keeps growing and you have to recreate the server periodically if you wish to run it for a long period of time. Also the startup is very slow because it has to read in all the previous log files.
 
@@ -137,7 +144,7 @@ Finally, to make OSX use dnscock for requests that match your domain suffix crea
 
 ---
 
-### Thanks
+## Thanks
 Lots of code in this repo is directly influenced by skydns and skydock. Many thanks to the authors of these projects.
 
 
