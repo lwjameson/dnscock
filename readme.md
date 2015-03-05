@@ -10,7 +10,7 @@
   - [Differences of dnsdock|dnscock from skydock](#differences-of-dnsdock|dnscock-from-skydock)
   - [OSX Usage](#osx-usage)
 - [](#)
-    - [Lots of code in this repo is directly influenced by skydns and skydock. Many thanks to the authors of these projects.](#lots-of-code-in-this-repo-is-directly-influenced-by-skydns-and-skydock-many-thanks-to-the-authors-of-these-projects)
+  - [Thanks](#thanks)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -55,7 +55,7 @@ You can rewrite portions of domain for a container (or even whole name) with fol
 - DNSDOCK_IMAGE will rewrite iamge-name
 - DNSDOCK_NAME will rewrite container-name
 - DNSDOCK_TTL will rewrite default ttl from dnscock arguments
-- DNSDOCK_alias will create new alias for the container. The IP of the container will be resolvable by this alias. You can pass more comma-separated aliases.
+- DNSDOCK_ALIAS will create new alias for the container. The IP of the container will be resolvable by this alias. You can pass more comma-separated aliases.
 
 You can always leave out parts from the left side. If multiple containers match then they are all returned. Wildcard requests are also supported.
 
@@ -137,6 +137,7 @@ Finally, to make OSX use dnscock for requests that match your domain suffix crea
 
 ---
 
-#### Lots of code in this repo is directly influenced by skydns and skydock. Many thanks to the authors of these projects.
+### Thanks
+Lots of code in this repo is directly influenced by skydns and skydock. Many thanks to the authors of these projects.
 
 
