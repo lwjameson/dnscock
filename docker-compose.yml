@@ -1,0 +1,8 @@
+dns:
+  image: t0mk/newcock
+  volumes:
+    - '/var/run/docker.sock:/var/run/docker.sock'
+  ports:
+    - '53:53/udp'
+  command: "-debug=true"
+
