@@ -74,30 +74,13 @@ You can always leave out parts from the left side. If multiple containers match 
 Example DNS queries with example responses to illustrate the functionality:
 
 ```
-> dig *.docker
+$ dig @your_webserver dnscock.docker
 ...
 ;; ANSWER SECTION:
-docker.			0	IN	A	172.17.42.5
-docker.			0	IN	A	172.17.42.3
-docker.			0	IN	A	172.17.42.2
-docker.			0	IN	A	172.17.42.7
-
-> dig redis.docker
-...
-;; ANSWER SECTION:
-redis.docker.		0	IN	A	172.17.42.3
-redis.docker.		0	IN	A	172.17.42.2
-
-> dig redis1.redis.docker
-...
-;; ANSWER SECTION:
-redis1.redis.docker.		0	IN	A	172.17.42.2
-
-> dig redis1.*.docker
-...
-;; ANSWER SECTION:
-redis1.*.docker.		0	IN	A	172.17.42.2
+dnscock.docker.			0	IN	A	10.0.0.24
 ```
+
+You might observe a 5 second delay with dig. It's under investigation. The mechanism of dig and host are a bit different from basic library gethostbyname. you should not see any delay when you `ping dnscock.docker`.
 
 ## Differences of dnscock from tonistiigi/dnsdock
 
