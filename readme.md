@@ -4,6 +4,7 @@
 
 - [dnscock](#dnscock)
   - [Build](#build)
+  - [Run](#run)
   - [Usage](#usage)
     - [Parameters](#parameters)
   - [DNS service discovery mechanism](#dns-service-discovery-mechanism)
@@ -22,6 +23,12 @@ This project is based on https://github.com/tonistiigi/dnsdock which is in turn 
 
 ```
 $ docker build -t t0mk/dnscock ./
+```
+
+## Run
+
+```
+$ docker run -v /var/run/docker.sock:/var/run/docker.sock -p 53:53/udp t0mk/dnscock -debug=true
 ```
 
 ## Usage
