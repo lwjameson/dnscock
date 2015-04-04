@@ -21,9 +21,9 @@ This project is based on https://github.com/tonistiigi/dnsdock which is in turn 
 
 ## Build
 
-```
-$ docker build -t t0mk/dnscock ./
-```
+The go binary is compiled in a golang container. Static binary is build. The binary is then packaged in a small container based on gliderlabs/alpine:3.1
+
+If you need to rebuild, just run `build.sh` or see the script.
 
 ## Run
 

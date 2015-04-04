@@ -1,9 +1,0 @@
-language: go
-
-go:
-    - 1.4
-
-before_script:
-  - go get -d -v ./...
-
-script: go test
